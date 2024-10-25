@@ -113,6 +113,8 @@
 #include "lite/ort/cv/face_parsing_bisenet.h"
 #include "lite/ort/cv/face_parsing_bisenet_dyn.h"
 #include "lite/ort/cv/yolofacev8.h"
+#include "lite/ort/cv/light_enhance.h"
+#include "lite/ort/cv/real_esr_gan.h"
 #include "lite/ort/sd/clip.h"
 #include "lite/ort/sd/unet.h"
 #include "lite/ort/sd/vae.h"
@@ -131,6 +133,7 @@
 #include "lite/trt/cv/trt_yolov8.h"
 #include "lite/trt/cv/trt_yolov6.h"
 #include "lite/trt/cv/trt_yolov5_blazeface.h"
+#include "lite/trt/cv/trt_lightenhance.h"
 #include "lite/trt/sd/trt_clip.h"
 #include "lite/trt/sd/trt_vae.h"
 #include "lite/trt/sd/trt_unet.h"
@@ -495,6 +498,8 @@ namespace lite
       typedef ortcv::FaceParsingBiSeNet _ONNXFaceParsingBiSeNet;
       typedef ortcv::FaceParsingBiSeNetDyn _ONNXFaceParsingBiSeNetDyn;
       typedef ortcv::YoloFaceV8 _ONNXYOLOFaceNet;
+      typedef ortcv::LightEnhance _ONNXLightEnhance;
+      typedef ortcv::RealESRGAN _ONNXRealESRGAN;
 
       // 1. classification
       namespace classification
@@ -656,6 +661,14 @@ namespace lite
       {
         typedef _ONNXColorizer Colorizer;
       }
+      namespace lightenhance
+      {
+          typedef  _ONNXLightEnhance LightEnhance;
+      }
+      namespace upscale
+      {
+          typedef  _ONNXRealESRGAN RealESRGAN;
+      }
       // 11. super resolution
       namespace resolution
       {
@@ -715,6 +728,7 @@ namespace lite{
             typedef trtcv::TRTYoloX _TRT_YoloX;
             typedef trtcv::TRTYoloV6 _TRT_YOLOv6;
             typedef trtcv::TRTYOLO5Face _TRT_YOLO5Face;
+            typedef trtcv::TRTLightEnhance _TRT_LightEnhance;
             namespace classification
             {
 
@@ -734,7 +748,12 @@ namespace lite{
                     typedef _TRT_YOLO5Face  YOLOV5Face;
                 }
             }
+            namespace lightenhance
+            {
+                typedef _TRT_LightEnhance LightEnhance;
+            }
         }
+
         namespace sd
         {
             typedef trtsd::TRTUNet _TRT_UNet;
