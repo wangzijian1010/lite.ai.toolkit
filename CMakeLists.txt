@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(lite.ai.toolkit)
 
 set(CMAKE_CXX_STANDARD 17)
-set(VERSION_STRING 0.2.0)
-set(SOVERSION_STRING 0.2.0)
+set(VERSION_STRING 0.3.1)
+set(SOVERSION_STRING 0.3.1)
 include(cmake/utils.cmake)
 
 if (NOT (UNIX AND NOT APPLE))
@@ -19,8 +19,15 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "-std=c++17 -Wno-deprecated ${CMAKE_CXX_FLAGS} ")
     message(STATUS "[Linux GCC Compiler Options]+:-std=c++17 -Wno-deprecated")
 endif ()
+# 指定CUDA编译器
+set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
+set(CMAKE_CUDA_ARCHITECTURES 89) # For RTX 20xx series
 
+# 启用 CUDA
+enable_language(CUDA)
 set(LITE_AI_ROOT_DIR ${CMAKE_SOURCE_DIR})
+# 将 CMAKE_SOURCE_DIR 传递给代码
+add_definitions(-DSOURCE_PATH="${CMAKE_SOURCE_DIR}")
 
 option(ENABLE_TEST "build test examples." OFF)
 option(ENABLE_DEBUG_STRING "enable DEBUG string or not" ON)

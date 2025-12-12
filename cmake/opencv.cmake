@@ -2,8 +2,8 @@ set(OpenCV_Version "4.9.0-ffmpeg4.2.2" CACHE STRING "OpenCV version" FORCE)
 set(OpenCV_DIR ${THIRD_PARTY_PATH}/opencv)
 # download from github if opencv library is not exists
 if (NOT EXISTS ${OpenCV_DIR})
-    set(OpenCV_Filename "opencv-${OpenCV_Version}-linux-x86_64.tgz")
-    set(OpenCV_URL https://github.com/DefTruth/lite.ai.toolkit/releases/download/v0.2.0-rc0/${OpenCV_Filename})
+    set(OpenCV_Filename "opencv.tar.gz")
+    set(OpenCV_URL https://ghfast.top/https://github.com/xlite-dev/lite.ai.toolkit/releases/download/v0.0.1/opencv.tar.gz)
     message("[Lite.AI.Toolkit][I] Downloading library: ${OpenCV_URL}")
     download_and_decompress(${OpenCV_URL} ${OpenCV_Filename} ${OpenCV_DIR}) 
     create_ffmpeg_syslinks_if_not_found(${OpenCV_DIR}/lib)
@@ -19,9 +19,9 @@ link_directories(${OpenCV_DIR}/lib)
 
 if(NOT WIN32)
     if(ENABLE_OPENCV_VIDEOIO OR ENABLE_TEST)
-        set(OpenCV_LIBS opencv_core opencv_imgproc opencv_imgcodecs opencv_video opencv_videoio)
+        set(OpenCV_LIBS opencv_core opencv_imgproc opencv_imgcodecs opencv_video opencv_videoio opencv_calib3d)
     else()
-        set(OpenCV_LIBS opencv_core opencv_imgproc opencv_imgcodecs) # no videoio, video module
+        set(OpenCV_LIBS opencv_core opencv_imgproc opencv_imgcodecs opencv_calib3d) # no videoio, video module
     endif()
 else()
     set(OpenCV_LIBS opencv_world490)
