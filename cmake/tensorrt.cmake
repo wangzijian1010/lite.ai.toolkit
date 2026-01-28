@@ -39,6 +39,8 @@ link_directories(${CUDA_DIR}/lib64)
 include_directories(${TensorRT_DIR}/include)
 link_directories(${TensorRT_DIR}/lib)
 
+add_subdirectory(/home/ubuntu/lite.ai.toolkit/lite/trt/calibrator)
+
 # 1. glob sources files
 file(GLOB TENSORRT_CORE_SRCS ${CMAKE_SOURCE_DIR}/lite/trt/core/*.cpp)
 file(GLOB TENSORRT_CUDA_KERNEL_SRCS_CPP ${CMAKE_SOURCE_DIR}/lite/trt/kernel/*.cpp)
@@ -47,6 +49,7 @@ file(GLOB TENSORRT_CV_SRCS ${CMAKE_SOURCE_DIR}/lite/trt/cv/*.cpp)
 file(GLOB TENSORRT_NLP_SRCS ${CMAKE_SOURCE_DIR}/lite/trt/nlp/*.cpp)
 file(GLOB TENSORRT_ASR_SRCS ${CMAKE_SOURCE_DIR}/lite/trt/asr/*.cpp)
 file(GLOB TENSORRT_SD_SRCS ${CMAKE_SOURCE_DIR}/lite/trt/sd/*.cpp)
+file(GLOB TENSORRT_SD_SRCS ${CMAKE_SOURCE_DIR}/lite/trt/calibrator/*.cpp)
 
 # 2. glob headers files
 file(GLOB TENSORRT_CORE_HEAD ${CMAKE_SOURCE_DIR}/lite/trt/core/*.h)
@@ -54,6 +57,7 @@ file(GLOB TENSORRT_CV_HEAD ${CMAKE_SOURCE_DIR}/lite/trt/cv/*.h)
 file(GLOB TENSORRT_NLP_HEAD ${CMAKE_SOURCE_DIR}/lite/trt/nlp/*.h)
 file(GLOB TENSORRT_ASR_HEAD ${CMAKE_SOURCE_DIR}/lite/trt/asr/*.h)
 file(GLOB TENSORRT_SD_HEAD ${CMAKE_SOURCE_DIR}/lite/trt/sd/*.h)
+file(GLOB TENSORRT_SD_SRCS ${CMAKE_SOURCE_DIR}/lite/trt/calibrator/*.h)
 file(GLOB TENSORRT_CUDA_KERNEL_HEAD_CPP ${CMAKE_SOURCE_DIR}/lite/trt/kernel/*.h)
 file(GLOB TENSORRT_CUDA_KERNEL_HEAD_CU ${CMAKE_SOURCE_DIR}/lite/trt/kernel/*.cuh)
 
