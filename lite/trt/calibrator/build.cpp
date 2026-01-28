@@ -46,6 +46,26 @@ void build_engine(const std::string& onnx_path,
     }
     std::cout << "Successfully parsed ONNX file: " << onnx_path << std::endl;
 
+
+    // 无法修复动态的维度 TRT无法修改为动态
+    // // ===========================================================
+    // // 【新增修复代码】 强制把 Batch 维度改为动态 (-1)
+    // // ===========================================================
+    // // 获取第一个输入张量 (通常就是 images)
+    // auto input = network->getInput(0);
+    //
+    // // 获取当前维度 (比如 [1, 3, 640, 640])
+    // auto dims = input->getDimensions();
+    //
+    // // 打印修改前的维度看看
+    // std::cout << "Original Input Dims: " << dims.d[0] << "x" << dims.d[1] << "x" << dims.d[2] << "x" << dims.d[3] << std::endl;
+    //
+    // // 关键步骤：把第一个维度 (Batch) 改成 -1，表示动态
+    // dims.d[0] = -1;
+    // input->setDimensions(dims);
+    //
+    // std::cout << "===> Fixed Input Dims to Dynamic: -1x" << dims.d[1] << "x" << dims.d[2] << "x" << dims.d[3] << std::endl;
+
     // -----------------------------------------------------------
     // 第三步：配置构建参数 (Config) —— 最关键的一步
     // -----------------------------------------------------------
