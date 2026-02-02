@@ -151,10 +151,10 @@ void compare_accuracy(
 int main(int argc, char* argv[]) {
 #ifdef ENABLE_TENSORRT
     // 默认路径 - 根据你的实际路径修改
-    std::string fp32_engine = "../../../examples/hub/trt/yolov5s_fp32.engine";
-    std::string fp16_engine = "../../../examples/hub/trt/yolov5s_fp16.engine";
-    std::string int8_engine = "../../../examples/hub/trt/yolov5s_int8.engine";
-    std::string test_img_path = "../../../examples/lite/resources/test_lite_yolov5_1.jpg";
+    std::string fp32_engine = "/workspace/lite.ai.toolkit/examples/hub/onnx/cv/yolov5s_fp32.engine";
+    std::string fp16_engine = "/workspace/lite.ai.toolkit/examples/hub/onnx/cv/yolov5s_fp16.engine";
+    std::string int8_engine = "/workspace/lite.ai.toolkit/examples/hub/onnx/cv/yolov5s_int8.engine";
+    std::string test_img_path = "/workspace/lite.ai.toolkit/examples/logs/test_lite_yolov5_1.jpg";
 
     // 命令行参数覆盖
     if (argc >= 5) {

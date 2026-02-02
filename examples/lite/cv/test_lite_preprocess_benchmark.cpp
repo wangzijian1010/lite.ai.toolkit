@@ -77,7 +77,7 @@ void print_results(const std::vector<BenchmarkResult>& results) {
 }
 
 int main(int argc, char* argv[]) {
-    std::string img_path = "../../../examples/lite/resources/test_lite_yolov5_1.jpg";
+    std::string img_path = "/workspace/lite.ai.toolkit/examples/lite/resources/test_lite_yolov5_1.jpg";
     if (argc > 1) img_path = argv[1];
     
     cv::Mat input = cv::imread(img_path);
