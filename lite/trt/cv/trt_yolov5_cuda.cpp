@@ -109,8 +109,9 @@ void TRTYoloV5CUDA::detect(const cv::Mat &mat, std::vector<types::Boxf> &detecte
     int img_height = static_cast<int>(mat.rows);
     int img_width = static_cast<int>(mat.cols);
 
-    // ============ 1. CUDA 预处理 (直接输出到 GPU) ============
-    // 预处理结果直接写入 buffers[0]，省掉一次 H2D 拷贝
+
+    // ============ 1. CUDA 预处理 ============
+    // 预处理结果直接写入 buffers[0]，省掉一次 GPU 内部拷贝
     PreprocessResult preprocess_result = preprocess_manager_->preprocess(mat, static_cast<float*>(buffers[0]));
 
     // ============ 2. TensorRT 推理 ============
