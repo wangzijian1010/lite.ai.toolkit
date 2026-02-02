@@ -39,7 +39,7 @@ link_directories(${CUDA_DIR}/lib64)
 include_directories(${TensorRT_DIR}/include)
 link_directories(${TensorRT_DIR}/lib)
 
-add_subdirectory(/home/ubuntu/lite.ai.toolkit/lite/trt/calibrator)
+add_subdirectory(${CMAKE_SOURCE_DIR}/lite/trt/calibrator)
 
 # 1. glob sources files
 file(GLOB TENSORRT_CORE_SRCS ${CMAKE_SOURCE_DIR}/lite/trt/core/*.cpp)
