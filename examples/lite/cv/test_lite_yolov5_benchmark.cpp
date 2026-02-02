@@ -1,6 +1,6 @@
 //
 // YOLOv5 性能基准测试
-// 对比 FP32 / FP16 / INT8 的速度和精度
+// 对比 原版 vs CUDA预处理 版本的速度
 //
 
 #include "lite/lite.h"
@@ -150,13 +150,12 @@ void compare_accuracy(
 
 int main(int argc, char* argv[]) {
 #ifdef ENABLE_TENSORRT
-    // 默认路径 - 根据你的实际路径修改
+    // 默认路径
     std::string fp32_engine = "/workspace/lite.ai.toolkit/examples/hub/onnx/cv/yolov5s_fp32.engine";
     std::string fp16_engine = "/workspace/lite.ai.toolkit/examples/hub/onnx/cv/yolov5s_fp16.engine";
     std::string int8_engine = "/workspace/lite.ai.toolkit/examples/hub/onnx/cv/yolov5s_int8.engine";
     std::string test_img_path = "/workspace/lite.ai.toolkit/examples/logs/test_lite_yolov5_1.jpg";
 
-    // 命令行参数覆盖
     if (argc >= 5) {
         fp32_engine = argv[1];
         fp16_engine = argv[2];
@@ -164,7 +163,6 @@ int main(int argc, char* argv[]) {
         test_img_path = argv[4];
     }
 
-    // 加载测试图片
     cv::Mat test_img = cv::imread(test_img_path);
     if (test_img.empty()) {
         std::cerr << "Failed to load test image: " << test_img_path << std::endl;
@@ -172,27 +170,79 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "Test image size: " << test_img.cols << "x" << test_img.rows << std::endl;
 
+    const int warmup_runs = 50;
+    const int benchmark_runs = 200;
+
     std::vector<BenchmarkResult> results;
 
-    // 测试 FP32
-    if (std::ifstream(fp32_engine).good()) {
-        results.push_back(YOLOv5Benchmark::run_benchmark(fp32_engine, "FP32", test_img));
-    } else {
-        std::cout << "[SKIP] FP32 engine not found: " << fp32_engine << std::endl;
-    }
-
-    // 测试 FP16
+    // ============ 原版 YOLOv5 (OpenCV 预处理) ============
     if (std::ifstream(fp16_engine).good()) {
-        results.push_back(YOLOv5Benchmark::run_benchmark(fp16_engine, "FP16", test_img));
-    } else {
-        std::cout << "[SKIP] FP16 engine not found: " << fp16_engine << std::endl;
+        std::cout << "\n[Original] Loading engine: " << fp16_engine << std::endl;
+        auto model = std::make_unique<lite::trt::cv::detection::YOLOV5>(fp16_engine);
+        
+        std::vector<lite::types::Boxf> boxes;
+        std::vector<double> latencies;
+
+        // Warmup
+        std::cout << "[Original] Warming up..." << std::endl;
+        for (int i = 0; i < warmup_runs; ++i) {
+            boxes.clear();
+            model->detect(test_img, boxes);
+        }
+
+        // Benchmark
+        std::cout << "[Original] Benchmarking (" << benchmark_runs << " runs)..." << std::endl;
+        for (int i = 0; i < benchmark_runs; ++i) {
+            boxes.clear();
+            auto start = std::chrono::high_resolution_clock::now();
+            model->detect(test_img, boxes);
+            auto end = std::chrono::high_resolution_clock::now();
+            latencies.push_back(std::chrono::duration<double, std::milli>(end - start).count());
+        }
+
+        BenchmarkResult result;
+        result.precision = "Original";
+        result.avg_latency_ms = std::accumulate(latencies.begin(), latencies.end(), 0.0) / latencies.size();
+        result.min_latency_ms = *std::min_element(latencies.begin(), latencies.end());
+        result.max_latency_ms = *std::max_element(latencies.begin(), latencies.end());
+        result.throughput_fps = 1000.0 / result.avg_latency_ms;
+        result.detected_boxes = static_cast<int>(boxes.size());
+        results.push_back(result);
     }
 
-    // 测试 INT8
-    if (std::ifstream(int8_engine).good()) {
-        results.push_back(YOLOv5Benchmark::run_benchmark(int8_engine, "INT8", test_img));
-    } else {
-        std::cout << "[SKIP] INT8 engine not found: " << int8_engine << std::endl;
+    // ============ CUDA 预处理版本 ============
+    if (std::ifstream(fp16_engine).good()) {
+        std::cout << "\n[CUDA] Loading engine: " << fp16_engine << std::endl;
+        auto model = std::make_unique<lite::trt::cv::detection::YOLOV5CUDA>(fp16_engine);
+        
+        std::vector<lite::types::Boxf> boxes;
+        std::vector<double> latencies;
+
+        // Warmup
+        std::cout << "[CUDA] Warming up..." << std::endl;
+        for (int i = 0; i < warmup_runs; ++i) {
+            boxes.clear();
+            model->detect(test_img, boxes);
+        }
+
+        // Benchmark
+        std::cout << "[CUDA] Benchmarking (" << benchmark_runs << " runs)..." << std::endl;
+        for (int i = 0; i < benchmark_runs; ++i) {
+            boxes.clear();
+            auto start = std::chrono::high_resolution_clock::now();
+            model->detect(test_img, boxes);
+            auto end = std::chrono::high_resolution_clock::now();
+            latencies.push_back(std::chrono::duration<double, std::milli>(end - start).count());
+        }
+
+        BenchmarkResult result;
+        result.precision = "CUDA";
+        result.avg_latency_ms = std::accumulate(latencies.begin(), latencies.end(), 0.0) / latencies.size();
+        result.min_latency_ms = *std::min_element(latencies.begin(), latencies.end());
+        result.max_latency_ms = *std::max_element(latencies.begin(), latencies.end());
+        result.throughput_fps = 1000.0 / result.avg_latency_ms;
+        result.detected_boxes = static_cast<int>(boxes.size());
+        results.push_back(result);
     }
 
     // 打印结果
@@ -200,21 +250,19 @@ int main(int argc, char* argv[]) {
         YOLOv5Benchmark::print_results(results);
     }
 
-    // 精度对比 (如果有多个精度的 engine)
+    // 验证 CUDA 版本的检测结果正确性
     if (results.size() >= 2) {
         std::cout << "\n========== Accuracy Comparison ==========\n";
         
-        // 用 FP32 作为 baseline
-        auto fp32_model = std::make_unique<lite::trt::cv::detection::YOLOV5>(fp32_engine);
-        std::vector<lite::types::Boxf> fp32_boxes;
-        fp32_model->detect(test_img, fp32_boxes);
+        auto original_model = std::make_unique<lite::trt::cv::detection::YOLOV5>(fp16_engine);
+        std::vector<lite::types::Boxf> original_boxes;
+        original_model->detect(test_img, original_boxes);
 
-        if (std::ifstream(int8_engine).good()) {
-            auto int8_model = std::make_unique<lite::trt::cv::detection::YOLOV5>(int8_engine);
-            std::vector<lite::types::Boxf> int8_boxes;
-            int8_model->detect(test_img, int8_boxes);
-            compare_accuracy(fp32_boxes, int8_boxes, "INT8");
-        }
+        auto cuda_model = std::make_unique<lite::trt::cv::detection::YOLOV5CUDA>(fp16_engine);
+        std::vector<lite::types::Boxf> cuda_boxes;
+        cuda_model->detect(test_img, cuda_boxes);
+
+        compare_accuracy(original_boxes, cuda_boxes, "CUDA Preprocess");
     }
 
 #else
