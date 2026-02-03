@@ -24,6 +24,7 @@ PreprocessManager::PreprocessManager(int target_width, int target_height, bool u
 PreprocessManager::~PreprocessManager() {
     if (d_input_) cudaFree(d_input_);
     if (d_output_) cudaFree(d_output_);
+    if (h_pinned_input_) cudaFreeHost(h_pinned_input_);
 }
 
 void PreprocessManager::ensure_input_buffer(size_t size) {
@@ -34,6 +35,20 @@ void PreprocessManager::ensure_input_buffer(size_t size) {
             throw std::runtime_error("Failed to allocate GPU memory for input");
         }
         input_buffer_size_ = size;
+    }
+}
+
+void PreprocessManager::ensure_pinned_buffer(size_t size) {
+    if (size > pinned_buffer_size_) {
+        if (h_pinned_input_) cudaFreeHost(h_pinned_input_);
+        cudaError_t err = cudaMallocHost(&h_pinned_input_, size);
+        if (err != cudaSuccess) {
+            // Pinned memory 分配失败不是致命错误，回退到普通内存
+            h_pinned_input_ = nullptr;
+            pinned_buffer_size_ = 0;
+            return;
+        }
+        pinned_buffer_size_ = size;
     }
 }
 
@@ -56,14 +71,27 @@ PreprocessResult PreprocessManager::preprocess(const cv::Mat& input, float* d_ou
     int src_height = input.rows;
     size_t input_size = src_width * src_height * 3 * sizeof(uint8_t);
 
-    // 确保输入缓冲足够大
+    // 确保 GPU 输入缓冲足够大
     ensure_input_buffer(input_size);
+    
+    // 确保 Pinned Memory 缓冲足够大
+    ensure_pinned_buffer(input_size);
 
-    // H2D 拷贝
-    if (stream_) {
-        cudaMemcpyAsync(d_input_, input.data, input_size, cudaMemcpyHostToDevice, stream_);
+    // H2D 拷贝（使用 Pinned Memory 加速）
+    const uint8_t* src_ptr;
+    if (h_pinned_input_ && pinned_buffer_size_ >= input_size) {
+        // 先拷贝到 pinned memory，再 H2D（总体更快）
+        memcpy(h_pinned_input_, input.data, input_size);
+        src_ptr = h_pinned_input_;
     } else {
-        cudaMemcpy(d_input_, input.data, input_size, cudaMemcpyHostToDevice);
+        // 回退到普通内存
+        src_ptr = input.data;
+    }
+    
+    if (stream_) {
+        cudaMemcpyAsync(d_input_, src_ptr, input_size, cudaMemcpyHostToDevice, stream_);
+    } else {
+        cudaMemcpy(d_input_, src_ptr, input_size, cudaMemcpyHostToDevice);
     }
 
     // 调用 GPU 预处理

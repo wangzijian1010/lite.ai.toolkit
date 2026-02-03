@@ -1,5 +1,5 @@
 //
-// YOLOv5 TensorRT 推理 - CUDA 预处理优化版本
+// YOLOv5 TensorRT 推理 - CUDA 预处理 + 后处理优化版本
 //
 
 #ifndef LITE_AI_TOOLKIT_TRT_YOLOV5_CUDA_H
@@ -7,6 +7,7 @@
 
 #include "lite/trt/core/trt_core.h"
 #include "lite/trt/kernel/preprocess_manager.h"
+#include "lite/trt/kernel/yolov5_postprocess_manager.h"
 #include "lite/utils.h"
 #include <memory>
 
@@ -36,12 +37,9 @@ namespace trtcv
 
         // CUDA 预处理管理器
         std::unique_ptr<PreprocessManager> preprocess_manager_;
-
-        void generate_bboxes(const PreprocessResult &preprocess_result,
-                             std::vector<types::Boxf> &bbox_collection,
-                             float* output,
-                             float score_threshold,
-                             int img_height, int img_width);
+        
+        // CUDA 后处理管理器
+        std::unique_ptr<YoloV5PostprocessManager> postprocess_manager_;
 
         void nms(std::vector<types::Boxf> &input, std::vector<types::Boxf> &output,
                  float iou_threshold, unsigned int topk, unsigned int nms_type);
