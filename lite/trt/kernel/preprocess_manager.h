@@ -73,6 +73,10 @@ private:
     float* d_output_ = nullptr;     // 输出张量 GPU 缓冲
     size_t input_buffer_size_ = 0;  // 当前输入缓冲大小
     
+    // Pinned Memory (加速 H2D 传输)
+    uint8_t* h_pinned_input_ = nullptr;  // 锁页内存缓冲
+    size_t pinned_buffer_size_ = 0;      // 锁页内存大小
+    
     // 归一化参数
     float mean_[3] = {0.0f, 0.0f, 0.0f};
     float std_[3] = {255.0f, 255.0f, 255.0f};
@@ -82,6 +86,9 @@ private:
     
     // 确保输入缓冲足够大
     void ensure_input_buffer(size_t size);
+    
+    // 确保 pinned memory 缓冲足够大
+    void ensure_pinned_buffer(size_t size);
 };
 
 } // namespace trtcv
