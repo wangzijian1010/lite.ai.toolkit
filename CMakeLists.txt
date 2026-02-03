@@ -19,12 +19,17 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "-std=c++17 -Wno-deprecated ${CMAKE_CXX_FLAGS} ")
     message(STATUS "[Linux GCC Compiler Options]+:-std=c++17 -Wno-deprecated")
 endif ()
-# 指定CUDA编译器
-set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
-set(CMAKE_CUDA_ARCHITECTURES 89) # For RTX 20xx series
+# 指定是否启用 CUDA/TensorRT 工具链
+option(ENABLE_CUDA "enable CUDA toolchain for GPU/TensorRT builds" ON)
 
-# 启用 CUDA
-enable_language(CUDA)
+if(ENABLE_CUDA)
+  # 指定CUDA编译器
+  set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
+  set(CMAKE_CUDA_ARCHITECTURES "75;86;89" CACHE STRING "CUDA architectures for lite.ai.toolkit" FORCE)
+
+  # 启用 CUDA
+  enable_language(CUDA)
+endif()
 set(LITE_AI_ROOT_DIR ${CMAKE_SOURCE_DIR})
 # 将 CMAKE_SOURCE_DIR 传递给代码
 add_definitions(-DSOURCE_PATH="${CMAKE_SOURCE_DIR}")
@@ -38,6 +43,10 @@ option(ENABLE_NCNN "enable NCNN engine" OFF)
 option(ENABLE_TNN "enable TNN engine" OFF)
 option(ENABLE_ONNXRUNTIME_CUDA "enable ONNXRuntime engine with CUDA provider" OFF) # for future use
 option(ENABLE_OPENCV_VIDEOIO "enable opencv videoio modules for detect_video apis" ON) # now, ON only
+
+if (ENABLE_TENSORRT AND NOT ENABLE_CUDA)
+    message(FATAL_ERROR "ENABLE_TENSORRT requires ENABLE_CUDA=ON")
+endif()
 
 if ((NOT ENABLE_ONNXRUNTIME) AND (NOT ENABLE_MNN))
     message(FATAL_ERROR "One of ONNXRuntime/MNN Backend must be enable!")
